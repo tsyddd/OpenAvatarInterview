@@ -1,0 +1,14 @@
+.env
+.venv/
+.pytest_cache/
+__pycache__/
+*.pyc
+
+models/
+lam_samples/
+runtime/
+logs/
+exp/
+dump_talk_audio.pcm
+
+*.log
