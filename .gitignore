@@ -12,3 +12,9 @@ exp/
 dump_talk_audio.pcm
 
 *.log
+src/handlers/client/ws_lam_client/lam_samples/
+src/handlers/avatar/lam/LAM_Audio2Expression/wheels/
+src/handlers/avatar/lam/LAM_Audio2Expression/assets/images/
+src/handlers/vad/silerovad/silero_vad/examples/
+src/handlers/vad/silerovad/silero_vad/src/silero_vad/data/
+src/service/frontend_service/frontend/dist/
