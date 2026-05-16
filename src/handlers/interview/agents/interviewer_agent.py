@@ -9,7 +9,7 @@ from ..prompts.loader import PromptLoader
 
 try:
     from langgraph.graph import END, StateGraph
-except Exception:  # pragma: no cover
+except Exception:
     END = "__end__"
     StateGraph = None
 
@@ -50,32 +50,69 @@ class InterviewerAgent:
 
     def _prepare_prompt(self, payload: InterviewerPayload) -> InterviewerPayload:
         state = payload["state"]
+
+        # Determine current question from plan
         if not state.current_question:
             if state.question_plan:
-                state.current_question = state.question_plan[min(state.current_question_index, len(state.question_plan) - 1)]
+                idx = min(state.current_question_index, len(state.question_plan) - 1)
+                state.current_question = state.question_plan[idx]
             else:
                 state.current_question = self.config.opening_prompt
+
+        # Build question plan context
+        question_plan_text = ""
+        if state.question_plan_details:
+            lines = []
+            for i, q in enumerate(state.question_plan_details):
+                marker = "→ " if i == state.current_question_index else "  "
+                status = "【当前】" if i == state.current_question_index else ("【已完成】" if i < state.current_question_index else "")
+                lines.append(f"{marker}{i+1}. [{q.get('category', '')}] {q.get('question', '')} {status}")
+            question_plan_text = "\n".join(lines)
+
         recent_turns = "\n".join(
             f"{turn.role}: {turn.text}"
-            for turn in state.turns[-6:]
+            for turn in state.turns[-8:]
         ) or "暂无"
-        payload["prompt"] = self.prompts.render(
-            "interviewer.md",
-            {
-                "resume_summary": state.resume_summary or state.resume_text or "暂无简历信息",
-                "current_question": state.current_question,
-                "recent_turns": recent_turns,
-            },
-        )
+
+        render_vars = {
+            "resume_summary": state.resume_summary or state.resume_text or "暂无简历信息",
+            "current_question": state.current_question,
+            "recent_turns": recent_turns,
+        }
+        if question_plan_text:
+            render_vars["question_plan"] = question_plan_text
+            render_vars["current_followup_count"] = str(state.current_followup_count)
+            render_vars["max_followups"] = str(self.config.max_followups_per_question)
+            payload["prompt"] = self.prompts.render("interviewer_with_plan.md", render_vars)
+        else:
+            payload["prompt"] = self.prompts.render("interviewer.md", render_vars)
+
         return payload
 
     def _decide_end(self, payload: InterviewerPayload) -> InterviewerPayload:
         state = payload["state"]
         user_message = payload["user_message"].strip()
-        interviewer_turns = sum(1 for turn in state.turns if turn.role == "interviewer")
-        payload["should_end"] = (
-            interviewer_turns >= self.config.max_questions
-            or "结束面试" in user_message
-            or "可以结束" in user_message
-        )
+
+        # User-initiated end
+        if "结束面试" in user_message or "可以结束" in user_message:
+            payload["should_end"] = True
+            return payload
+
+        # Plan-based end: all questions in the plan have been fully exhausted
+        if state.question_plan:
+            q_count = len(state.question_plan)
+            last_idx = q_count - 1
+            max_followups = self.config.max_followups_per_question
+            plan_exhausted = (
+                state.current_question_index > last_idx
+                or (
+                    state.current_question_index == last_idx
+                    and state.current_followup_count >= max_followups
+                )
+            )
+            payload["should_end"] = plan_exhausted
+        else:
+            # Fallback: no question plan, use max_questions count
+            interviewer_turns = sum(1 for turn in state.turns if turn.role == "interviewer")
+            payload["should_end"] = interviewer_turns >= self.config.max_questions
         return payload

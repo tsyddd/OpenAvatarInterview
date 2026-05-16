@@ -19,21 +19,23 @@ const props = withDefaults(
 
 <style scoped lang="less">
 .answer-message-container {
-  padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 12px;
-  color: #26244c;
+  padding: 8px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.5;
 
   &.human {
-    background: #dddddd99;
-    // margin-left: 20px;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    color: #334155;
     margin-right: 0;
   }
 
   &.avatar {
-    background: #9189fa;
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
     color: #ffffff;
-    // margin-right: 20px;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.2);
   }
 }
 </style>

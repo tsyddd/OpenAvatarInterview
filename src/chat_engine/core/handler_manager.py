@@ -99,11 +99,14 @@ class HandlerManager:
         enabled_handlers = self.get_enabled_handler_registries()
         client_handlers = []
         manager_handlers = []
+        other_handlers = []
         for registry in enabled_handlers:
             if isinstance(registry.handler, ClientHandlerBase):
                 client_handlers.append(registry)
             elif isinstance(registry.handler, ManagerHandlerBase):
                 manager_handlers.append(registry)
+            else:
+                other_handlers.append(registry)
 
             load_start = time.monotonic()
             logger.info(f"Loading handler {registry.base_info.name}")
@@ -123,6 +126,14 @@ class HandlerManager:
                 dur_setup = time.monotonic() - setup_start
                 logger.info(
                     f"Setup manager handler {registry.base_info.name} loaded in {round(dur_setup * 1e3)} milliseconds")
+            for registry in other_handlers:
+                if not hasattr(registry.handler, 'on_setup_app'):
+                    continue
+                setup_start = time.monotonic()
+                registry.handler.on_setup_app(app, ui, parent_block)
+                dur_setup = time.monotonic() - setup_start
+                logger.info(
+                    f"Setup handler {registry.base_info.name} loaded in {round(dur_setup * 1e3)} milliseconds")
 
     def get_enabled_handler_registries(self, order_by_priority=True):
         result = []

@@ -4,8 +4,8 @@ default:
   service:
     host: "0.0.0.0"
     port: 8382
-    cert_file: "ssl_certs/localhost.crt"
-    cert_key: "ssl_certs/localhost.key"
+    cert_file: ""
+    cert_key: ""
   history:
     retention_mode: "by_both"
     max_events: 1000
@@ -80,6 +80,8 @@ default:
         model_name: "qwen-plus"
         evaluator_model_name: "qwen-plus"
         report_model_name: "qwen-plus"
+        question_planner_model: "qwen3.6-flash"
+        resume_analyzer_model: "qwen3.6-flash"
         api_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
         session_base_dir: "runtime/sessions"
         max_questions: 10

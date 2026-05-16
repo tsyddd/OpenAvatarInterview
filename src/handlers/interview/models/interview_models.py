@@ -26,13 +26,16 @@ class InterviewSessionState:
     resume_filename: str | None = None
     resume_text: str = ""
     resume_summary: str = ""
+    resume_analysis: dict[str, Any] | None = None
     question_plan: list[str] = field(default_factory=list)
+    question_plan_details: list[dict[str, Any]] = field(default_factory=list)
     current_question: str = ""
     current_question_index: int = 0
     current_followup_count: int = 0
     covered_topics: list[str] = field(default_factory=list)
     conversation_summary: str = ""
     turns: list[InterviewTurn] = field(default_factory=list)
+    dialogue_analysis: dict[str, Any] | None = None
     final_evaluation: dict[str, Any] | None = None
     final_report: dict[str, Any] | None = None
 
@@ -47,13 +50,16 @@ class InterviewSessionState:
             resume_filename=data.get("resume_filename"),
             resume_text=str(data.get("resume_text", "")),
             resume_summary=str(data.get("resume_summary", "")),
+            resume_analysis=data.get("resume_analysis"),
             question_plan=list(data.get("question_plan", [])),
+            question_plan_details=list(data.get("question_plan_details", [])),
             current_question=str(data.get("current_question", "")),
             current_question_index=int(data.get("current_question_index", 0) or 0),
             current_followup_count=int(data.get("current_followup_count", 0) or 0),
             covered_topics=list(data.get("covered_topics", [])),
             conversation_summary=str(data.get("conversation_summary", "")),
             turns=[InterviewTurn.from_dict(item) for item in data.get("turns", [])],
+            dialogue_analysis=data.get("dialogue_analysis"),
             final_evaluation=data.get("final_evaluation"),
             final_report=data.get("final_report"),
         )

@@ -2,6 +2,7 @@
 import { ConfigProvider } from 'ant-design-vue'
 import { storeToRefs } from 'pinia'
 
+import HomeView from '@/views/HomeView/index.vue'
 import WebcamPermission from '@/components/WebcamPermission.vue'
 import { antdLocale, locale } from '@/langs'
 import VideoChat from '@/views/VideoChat/index.vue'
@@ -12,47 +13,46 @@ import isElectron from './utils/isElectron'
 
 const appState = useAppStore()
 const mediaState = useMediaStore()
-const { chatMode } = storeToRefs(appState)
+const { chatMode, appMode } = storeToRefs(appState)
 appState.init()
-// import dayjs from 'dayjs';
-// import 'dayjs/locale/zh-cn';
-// dayjs.locale('zh-cn');
 </script>
 <template>
   <ConfigProvider :locale="antdLocale[locale]">
-    <div
-      v-if="isElectron"
-      class="wrap"
-      :style="{
-        backgroundImage: 'none',
-      }"
-    >
-      <WebcamPermission v-if="!mediaState.webcamAccessed" auto-access />
-      <template v-if="chatMode === 'ws'">
-        <WSVideoChat />
-      </template>
-      <template v-else>
-        <VideoChat />
-      </template>
-    </div>
-    <div v-else class="wrap">
-      <WebcamPermission v-if="!mediaState.webcamAccessed" />
-      <template v-if="chatMode === 'ws'">
-        <WSVideoChat />
-      </template>
-      <template v-else>
-        <VideoChat />
-      </template>
-    </div>
+    <HomeView v-if="appMode === 'home'" />
+    <template v-else>
+      <div
+        v-if="isElectron"
+        class="wrap"
+        :style="{
+          backgroundImage: 'none',
+        }"
+      >
+        <WebcamPermission v-if="!mediaState.webcamAccessed" auto-access />
+        <template v-if="chatMode === 'ws'">
+          <WSVideoChat />
+        </template>
+        <template v-else>
+          <VideoChat />
+        </template>
+      </div>
+      <div v-else class="wrap">
+        <WebcamPermission v-if="!mediaState.webcamAccessed" />
+        <template v-if="chatMode === 'ws'">
+          <WSVideoChat />
+        </template>
+        <template v-else>
+          <VideoChat />
+        </template>
+      </div>
+    </template>
   </ConfigProvider>
 </template>
 <style lang="less" scoped>
 .wrap {
-  background-image: url(@/assets/background.png);
   height: calc(max(80vh, 100%));
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 30%, #e0e7ff 60%, #dbeafe 100%);
   position: relative;
+  overflow: hidden;
   *::-webkit-scrollbar {
     display: none;
   }

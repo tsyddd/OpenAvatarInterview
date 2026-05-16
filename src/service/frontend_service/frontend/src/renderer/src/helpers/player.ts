@@ -101,7 +101,10 @@ export class Player {
     this.flush(samples, this.samplesList.length - 1)
   }
   flush(samples: ISamples, index: number) {
-    if (!(samples && this.autoPlay && this.audioCtx)) return
+    if (!samples) return
+    if (!this.autoPlay) { console.log('[Player] flush skipped: autoPlay=false'); return }
+    if (!this.audioCtx) { console.log('[Player] flush skipped: no audioCtx'); return }
+    console.log('[Player] flush: audioCtx.state=' + this.audioCtx.state + ' startTime=' + this.startTime + ' dataLen=' + samples.data.length + ' sampleRate=' + this.option.sampleRate)
     if (this.audioCtx.state === 'suspended') {
       this.audioCtx.resume()
     }
@@ -150,6 +153,7 @@ export class Player {
     this.bufferSource.connect(this.gainNode!)
     this.bufferSource.connect(this.analyserNode!) // bufferSource连接到analyser
     this.bufferSource.start(this.startTime)
+    console.log('[Player] audio scheduled: startTime=' + this.startTime + ' duration=' + audioBuffer.duration + ' gain=' + this.gainNode!.gain.value)
     samples.startTime = this.startTime
     if (this._firstStartAbsoluteTime === undefined) {
       this._firstStartAbsoluteTime = Date.now()

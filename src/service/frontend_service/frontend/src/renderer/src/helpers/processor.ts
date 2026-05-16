@@ -332,9 +332,16 @@ export class Processor {
     const { audio } = data_records
     if (audio) {
       const { sample_rate, shape, data_offset, data_type } = audio
+      console.log('[AudioConfig] audio record:', { sample_rate, shape, data_offset, data_type, end_of_batch, batch_id: parsedData.batch_id })
       const inputCodec = InputCodecs[data_type]
       const TargetTypedArray = TypedArrays[data_type]
+      // Skip creating Player for welcome frame dummy audio (shape [1,1] = 1 sample)
+      const isDummyAudio = shape && shape.length === 2 && shape[0] === 1 && shape[1] === 1
       if (lastMotionGroup.player === undefined) {
+        if (isDummyAudio) {
+          console.log('[AudioConfig] Skipping dummy audio (welcome frame), shape:', shape)
+          return
+        }
         if (
           prevMotionGroup &&
           prevMotionGroup.player &&
@@ -342,6 +349,7 @@ export class Processor {
         ) {
           lastMotionGroup.player = prevMotionGroup.player
         } else if (sample_rate) {
+          console.log('[AudioConfig] Creating new Player, sample_rate:', sample_rate, 'batch_id:', parsedData.batch_id)
           lastMotionGroup.player = new Player(
             {
               inputCodec,
@@ -401,9 +409,11 @@ export class Processor {
         prevHasPlayerMotionDataGroup &&
         prevHasPlayerMotionDataGroup.player !== lastMotionGroup.player
       ) {
+        console.log('[AudioConfig] Setting autoPlay=false, prev player exists and is different')
         lastMotionGroup.player.autoPlay = false
       }
       if (lastMotionGroup.player) {
+        console.log('[AudioConfig] Feeding audio, autoPlay:', lastMotionGroup.player.autoPlay, 'dataSize:', shapeLength, 'sampleRate:', sample_rate)
         lastMotionGroup.player.feed({
           audio: new TargetTypedArray(audioArrayBuffer),
           end_of_batch,

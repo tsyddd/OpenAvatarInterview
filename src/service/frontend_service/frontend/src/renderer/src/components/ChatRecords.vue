@@ -28,7 +28,6 @@ watch(
   }
 )
 function scrollToBottom(): void {
-  // console.log("🚀 ~ scrollToBottom ~ scrollToBottom:")
   if (containerRef.value) {
     containerRef.value.scrollTop = containerRef.value.scrollHeight
   }
@@ -47,11 +46,10 @@ defineExpose({
           v-show="item.message && !(item.cancelled && item.invalid)"
           :class="['chat-message', item.role, { cancelled: item.cancelled }]"
         >
-          <!-- <div v-if="item.stream_key" class="stream-key">stream_key: {{ item.stream_key }}</div> -->
           <ChatMessage
             :message="item.message"
             :role="item.role"
-            :style="item.cancelled ? 'background:#f5c542;color:#26244c;' : ''"
+            :style="item.cancelled ? 'background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;box-shadow:0 2px 8px rgba(245,158,11,0.25);' : ''"
           />
         </div>
       </template>
@@ -64,9 +62,15 @@ defineExpose({
   width: 100%;
   height: 100%;
   overflow-y: auto;
+  padding: 4px;
 
   &::-webkit-scrollbar {
-    display: none;
+    width: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
   }
 }
 
@@ -76,12 +80,11 @@ defineExpose({
   align-items: flex-end;
   justify-content: end;
   width: 100%;
-  // height: 100%;
   height: auto;
   min-height: 100%;
 
   .chat-message {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     max-width: 80%;
 
     &.human {
@@ -102,8 +105,8 @@ defineExpose({
 
     .stream-key {
       margin-bottom: 4px;
-      font-size: 12px;
-      color: #a5a5a5;
+      font-size: 11px;
+      color: #94a3b8;
       word-break: break-all;
     }
   }

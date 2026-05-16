@@ -55,8 +55,6 @@ const props = withDefaults(
 const emit = defineEmits([])
 </script>
 
-<style scoped lang="less"></style>
-
 <style scoped lang="less">
 .player-controls {
   height: 15%;
@@ -67,24 +65,35 @@ const emit = defineEmits([])
   min-height: 84px;
 
   .chat-btn {
-    height: 64px;
-    width: 296px;
+    height: 56px;
+    width: 280px;
     display: flex;
     justify-content: center;
     align-items: center;
     border-radius: 999px;
-    opacity: 1;
-    background: linear-gradient(180deg, #7873f6 0%, #524de1 100%);
-    transition: all 0.3s;
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 50%, #5b21b6 100%);
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 2;
     cursor: pointer;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4), 0 4px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+    }
   }
 
   .start-chat {
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 600;
     text-align: center;
     color: #ffffff;
+    letter-spacing: 0.5px;
   }
 
   .waiting-icon-text {
@@ -114,13 +123,19 @@ const emit = defineEmits([])
   }
 
   .stop-chat {
-    width: 64px;
+    width: 56px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+
+    &:hover {
+      box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+    }
 
     .stop-chat-inner {
-      width: 25px;
-      height: 25px;
-      border-radius: 6.25px;
-      background: #fafafa;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: #ffffff;
     }
   }
 

@@ -13,6 +13,15 @@ type ChatRecord = {
   invalid?: boolean
 } & TextPayload
 
+interface ResumeItem {
+  id: string
+  filename: string
+  uploadDate: string
+  questions: any[]
+}
+
+const APP_STORAGE_KEY = 'open-avatar-interview-app-state'
+
 interface AppState {
   avatarType: '' | 'lam'
   avatarWSRoute: string
@@ -24,6 +33,11 @@ interface AppState {
 
   toolsVisible: boolean
   inputVisible: boolean
+
+  appMode: 'home' | 'interview'
+  resumeList: ResumeItem[]
+  selectedResumeId: string | null
+  currentSessionId: string | null
 }
 
 export const useAppStore = defineStore('appStore', {
@@ -37,10 +51,43 @@ export const useAppStore = defineStore('appStore', {
     chatRecords: [],
     toolsVisible: true,
     inputVisible: true,
+    appMode: 'home',
+    resumeList: [],
+    selectedResumeId: null,
+    currentSessionId: null,
   }),
   actions: {
+    _persistState() {
+      if (typeof window === 'undefined') return
+      localStorage.setItem(
+        APP_STORAGE_KEY,
+        JSON.stringify({
+          resumeList: this.resumeList,
+          selectedResumeId: this.selectedResumeId,
+          currentSessionId: this.currentSessionId,
+        })
+      )
+    },
+    _restoreState() {
+      if (typeof window === 'undefined') return
+      const raw = localStorage.getItem(APP_STORAGE_KEY)
+      if (!raw) return
+      try {
+        const parsed = JSON.parse(raw) as Partial<{
+          resumeList: ResumeItem[]
+          selectedResumeId: string | null
+          currentSessionId: string | null
+        }>
+        this.resumeList = Array.isArray(parsed.resumeList) ? parsed.resumeList : []
+        this.selectedResumeId = parsed.selectedResumeId || (this.resumeList[0]?.id ?? null)
+        this.currentSessionId = parsed.currentSessionId || null
+      } catch {
+        localStorage.removeItem(APP_STORAGE_KEY)
+      }
+    },
     async init() {
       const mediaStore = useMediaStore()
+      this._restoreState()
       return initConfig()
         .then((res) => res.json())
         .then((config) => {
@@ -86,6 +133,35 @@ export const useAppStore = defineStore('appStore', {
     },
     resetChatRecords() {
       this.chatRecords = []
+    },
+    startInterview(sessionId?: string) {
+      this.currentSessionId = sessionId || null
+      this.appMode = 'interview'
+      this._persistState()
+    },
+    goHome() {
+      this.currentSessionId = null
+      this.appMode = 'home'
+      this._persistState()
+    },
+    addResume(resume: ResumeItem) {
+      this.resumeList = [...this.resumeList, resume]
+      this.selectedResumeId = resume.id
+      this._persistState()
+    },
+    selectResume(id: string) {
+      this.selectedResumeId = id
+      this._persistState()
+    },
+    removeResume(id: string) {
+      this.resumeList = this.resumeList.filter((r) => r.id !== id)
+      if (this.selectedResumeId === id) {
+        this.selectedResumeId = this.resumeList.length > 0 ? this.resumeList[0].id : null
+      }
+      if (this.currentSessionId === id) {
+        this.currentSessionId = null
+      }
+      this._persistState()
     },
   },
 })

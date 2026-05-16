@@ -140,22 +140,25 @@ const cameraListShow = ref(false)
 
 <style lang="less" scoped>
 .action-group {
-  border-radius: 12px;
-  background: rgba(88, 87, 87, 0.5);
-  padding: 2px;
-  backdrop-filter: blur(8px);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 4px;
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 
   .action {
     cursor: pointer;
-    width: 42px;
-    height: 42px;
-    border-radius: 8px;
-    font-size: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
-    color: #fff;
+    color: #475569;
+    transition: all 0.2s ease;
 
     .corner {
       position: absolute;
@@ -168,36 +171,33 @@ const cameraListShow = ref(false)
         height: 6px;
         border-top: 3px transparent solid;
         border-left: 3px transparent solid;
-        border-bottom: 3px #fff solid;
-        border-right: 3px #fff solid;
+        border-bottom: 3px #94a3b8 solid;
+        border-right: 3px #94a3b8 solid;
       }
     }
 
-    // &:hover {
-    // 	.selectors {
-    // 		display: block !important;
-    // 	}
-    // }
     .selectors {
       position: absolute;
       top: 0;
       left: calc(100%);
-      margin-left: 3px;
+      margin-left: 6px;
       max-height: 150px;
 
       &.left {
         left: 0;
-        margin-left: -3px;
+        margin-left: -6px;
         transform: translateX(-100%);
       }
 
-      border-radius: 12px;
+      border-radius: 14px;
       width: max-content;
       overflow: hidden;
       overflow: auto;
 
-      background: rgba(90, 90, 90, 0.5);
-      backdrop-filter: blur(8px);
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 
       .selector {
         max-width: 250px;
@@ -206,38 +206,41 @@ const cameraListShow = ref(false)
         white-space: nowrap;
         position: relative;
         cursor: pointer;
-        height: 42px;
-        line-height: 42px;
-        color: #fff;
-        font-size: 14px;
+        height: 40px;
+        line-height: 40px;
+        color: #334155;
+        font-size: 13px;
+        transition: background 0.15s ease;
 
         &:hover {
-          background: #67666a;
+          background: rgba(124, 58, 237, 0.08);
         }
 
-        padding-left: 15px;
-        padding-right: 50px;
+        padding-left: 14px;
+        padding-right: 44px;
 
         .active-icon {
           position: absolute;
           right: 10px;
-          width: 40px;
-          height: 40px;
+          width: 36px;
+          height: 36px;
           display: flex;
           align-items: center;
           justify-content: center;
           top: 0;
+          color: #7c3aed;
         }
       }
     }
   }
 
   .action:hover {
-    background: #67666a;
+    background: rgba(124, 58, 237, 0.1);
+    color: #7c3aed;
   }
 }
 
 .action-group + .action-group {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 </style>

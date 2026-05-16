@@ -65,7 +65,7 @@ export const useWSVideoChatStore = defineStore('wsVideoChatStore', {
   state: (): WSChatState => ({
     streamState: StreamState.closed,
     ws: null,
-    sessionId: '',
+    sessionId: crypto.randomUUID ? crypto.randomUUID() : nanoid(),
     audioContext: null,
     audioProcessor: null,
     audioSource: null,
@@ -80,10 +80,10 @@ export const useWSVideoChatStore = defineStore('wsVideoChatStore', {
       const mediaStore = useMediaStore()
       const chatStore = useChatStore()
       if (this.streamState === StreamState.closed) {
+        this.sessionId = appStore.currentSessionId || this.sessionId || (crypto.randomUUID ? crypto.randomUUID() : nanoid())
         await mediaStore.accessDevice()
         appStore.resetChatRecords()
         chatStore.replying = false
-        this.sessionId = crypto.randomUUID ? crypto.randomUUID() : nanoid()
         this.streamState = StreamState.waiting
         this._createWS()
         this._initLocalAvatar()

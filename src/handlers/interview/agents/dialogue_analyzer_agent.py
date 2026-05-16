@@ -14,17 +14,17 @@ from ..prompts.loader import PromptLoader
 
 try:
     from langgraph.graph import END, StateGraph
-except Exception:  # pragma: no cover
+except Exception:
     END = "__end__"
     StateGraph = None
 
 
-class EvaluationPayload(TypedDict, total=False):
+class DialogueAnalysisPayload(TypedDict, total=False):
     state: InterviewSessionState
     result: dict
 
 
-class EvaluationAgent:
+class DialogueAnalyzerAgent:
     def __init__(self, config: InterviewAgentConfig, client: OpenAI | None):
         self.config = config
         self.client = client
@@ -34,52 +34,53 @@ class EvaluationAgent:
     def _build_graph(self):
         if StateGraph is None:
             return None
-        graph = StateGraph(EvaluationPayload)
-        graph.add_node("evaluate", self._evaluate)
-        graph.add_edge("evaluate", END)
-        graph.set_entry_point("evaluate")
+        graph = StateGraph(DialogueAnalysisPayload)
+        graph.add_node("analyze", self._analyze)
+        graph.add_edge("analyze", END)
+        graph.set_entry_point("analyze")
         return graph.compile()
 
-    def evaluate(self, state: InterviewSessionState) -> dict:
-        payload: EvaluationPayload = {"state": state}
+    def analyze(self, state: InterviewSessionState) -> dict:
+        payload: DialogueAnalysisPayload = {"state": state}
         if self.graph is not None:
             return self.graph.invoke(payload).get("result", {})
-        return self._evaluate(payload).get("result", {})
+        return self._analyze(payload).get("result", {})
 
-    def _evaluate(self, payload: EvaluationPayload) -> EvaluationPayload:
+    def _analyze(self, payload: DialogueAnalysisPayload) -> DialogueAnalysisPayload:
         state = payload["state"]
         transcript = "\n".join(f"{turn.role}: {turn.text}" for turn in state.turns)
         fallback = {
-            "recommendation": "待定",
-            "strengths": [],
-            "risks": [],
-            "topic_coverage": state.covered_topics,
-            "communication": "待评估",
-            "overall_summary": "模型评估不可用，使用默认结果。",
+            "topic_coverage": [],
+            "answer_quality": [],
+            "technical_depth": {"score": 3, "analysis": "无法分析"},
+            "communication": {"score": 3, "analysis": "无法分析"},
+            "notable_moments": [],
+            "overall_score": 3,
+            "overall_comment": "模型分析不可用，使用默认结果。",
         }
         if self.client is None:
             payload["result"] = fallback
             return payload
         try:
             response = self.client.chat.completions.create(
-                model=self.config.evaluator_model_name,
+                model=self.config.dialogue_analyzer_model,
                 messages=[
-                    {"role": "system", "content": self.prompts.read("evaluator.md")},
-                    {"role": "user", "content": f"请根据以上对话进行评估。请只返回JSON，不要包含markdown代码块。\n\n对话记录:\n{transcript}"},
+                    {"role": "system", "content": self.prompts.read("dialogue_analyzer.md")},
+                    {"role": "user", "content": f"请根据以上对话进行分析。请只返回JSON，不要包含markdown代码块。\n\n对话记录:\n{transcript}"},
                 ],
                 stream=False,
                 response_format={"type": "json_object"},
-                max_tokens=1200,
+                max_tokens=2000,
             )
             content = response.choices[0].message.content if response and response.choices else "{}"
-            logger.info(f"Evaluation raw response (first 300 chars): {str(content)[:300]}")
+            logger.info(f"Dialogue analysis raw response (first 300 chars): {str(content)[:300]}")
             extracted = self._extract_json(content or "{}")
             payload["result"] = json.loads(extracted)
         except json.JSONDecodeError as e:
-            logger.warning(f"Evaluation JSON parse error: {e}, content: {str(content)[:500] if content else 'empty'}")
+            logger.warning(f"Dialogue analysis JSON parse error: {e}")
             payload["result"] = fallback
         except Exception as e:
-            logger.warning(f"Evaluation LLM call failed, using fallback: {type(e).__name__}: {e}")
+            logger.warning(f"Dialogue analysis LLM call failed, using fallback: {type(e).__name__}: {e}")
             payload["result"] = fallback
         return payload
 

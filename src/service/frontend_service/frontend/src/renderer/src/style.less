@@ -2,9 +2,11 @@ html,
 body {
   margin: 0;
   overflow-y: auto;
-  // 禁用原生缩放和滚动回弹
   overscroll-behavior: none;
   touch-action: manipulation;
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -17,13 +19,25 @@ body {
 
 img {
   pointer-events: none;
-  // 禁止图片长按保存
   -webkit-touch-callout: none;
 }
 
 #app {
   width: 100vw;
   height: 100vh;
-  // 确保不触发原生缩放
   touch-action: manipulation;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
 }

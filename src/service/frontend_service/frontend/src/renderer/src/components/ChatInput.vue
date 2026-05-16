@@ -62,6 +62,7 @@ function onInterrupt() {
         <textarea
           ref="chatInputRef"
           class="chat-input"
+          placeholder="输入消息..."
           :style="`height:${inputHeight}px`"
           @keydown="on_chat_input_keydown"
           @input="on_chat_input"
@@ -94,22 +95,18 @@ function onInterrupt() {
   min-height: 84px;
   width: calc(100% - 140px);
   margin: auto;
-  // padding: 0 12px;
 
   .chat-input-inner {
     padding: 0 12px;
-    background-color: #fff;
-    height: 64px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    height: 56px;
     flex: 1;
     display: flex;
     align-items: center;
-    border: 1px solid #e8eaf2;
-    border-radius: 12px;
-    border-radius: 20px;
-    box-shadow:
-      0 12px 24px -16px rgba(54, 54, 73, 0.04),
-      0 12px 40px 0 rgba(51, 51, 71, 0.08),
-      0 0 1px 0 rgba(44, 44, 54, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
 
     .chat-input-wrapper {
       flex: 1;
@@ -121,8 +118,8 @@ function onInterrupt() {
         width: 100%;
         border: none;
         outline: none;
-        color: #26244c;
-        font-size: 16px;
+        color: #1e293b;
+        font-size: 15px;
         font-weight: 400;
         resize: none;
         padding: 0;
@@ -130,6 +127,12 @@ function onInterrupt() {
         line-height: 24px;
         max-height: 48px;
         min-height: 24px;
+        background: transparent;
+        font-family: inherit;
+
+        &::placeholder {
+          color: #94a3b8;
+        }
       }
 
       .rowsDiv {
@@ -138,7 +141,7 @@ function onInterrupt() {
         right: 0;
         z-index: -1;
         visibility: hidden;
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 400;
         line-height: 24px;
         white-space: pre-wrap;
@@ -150,40 +153,58 @@ function onInterrupt() {
     .interrupt-btn {
       border: none;
       flex: 0 0 auto;
-      background: #615ced;
-      border-radius: 20px;
-      height: 28px;
-      width: 28px;
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      border-radius: 12px;
+      height: 32px;
+      width: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-left: 16px;
+      margin-left: 12px;
       cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+
+      &:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+      }
     }
 
     .interrupt-btn {
-      background: #e85d5d;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+
+      &:hover {
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+      }
     }
   }
 
   .stop-chat-btn {
     cursor: pointer;
     margin-right: 12px;
-    height: 28px;
-    width: 28px;
+    height: 32px;
+    width: 32px;
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 999px;
-    opacity: 1;
-    background: linear-gradient(180deg, #7873f6 0%, #524de1 100%);
+    border-radius: 12px;
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+    }
 
     &::after {
       content: ' ';
       width: 12px;
       height: 12px;
-      border-radius: 2px;
-      background: #fafafa;
+      border-radius: 3px;
+      background: #ffffff;
     }
   }
 }

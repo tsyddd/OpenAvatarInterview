@@ -47,3 +47,15 @@ export function makeURL(path: string): string {
 export function makeDataToolFileURL(filePath: string): string {
   return `${useSSL ? 'https' : 'http'}://${serverHost}/download/manager/data_tool/file?file_path=${encodeURIComponent(filePath)}`
 }
+
+export function getInterviewSession(sessionId: string): Promise<Response> {
+  return fetch(`/openavatarinterview/sessions/${sessionId}`)
+}
+
+export function getInterviewReport(sessionId: string): Promise<Response> {
+  return fetch(`/openavatarinterview/sessions/${sessionId}/report`)
+}
+
+export function getInterviewAnalysis(sessionId: string): Promise<Response> {
+  return fetch(`/openavatarinterview/sessions/${sessionId}/analysis`)
+}
