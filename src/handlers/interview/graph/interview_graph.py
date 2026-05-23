@@ -11,6 +11,9 @@ from ..agents.interviewer_agent import InterviewerAgent
 from ..agents.question_planner_agent import QuestionPlannerAgent
 from ..agents.report_generator_agent import ReportGeneratorAgent
 from ..agents.resume_analyzer_agent import ResumeAnalyzerAgent
+from ..emotion.emotion_agent import EmotionAgent
+from ..emotion.emotion_types import DialogueTurn, EmotionAssessment, EmotionAssessmentInput
+from ..emotion.interview_policy import build_interview_policy_from_assessment
 from ..models.interview_models import InterviewSessionState, InterviewTurn
 
 
@@ -24,6 +27,7 @@ class InterviewGraph:
         question_planner: QuestionPlannerAgent | None = None,
         dialogue_analyzer: DialogueAnalyzerAgent | None = None,
         report_generator: ReportGeneratorAgent | None = None,
+        emotion_agent: EmotionAgent | None = None,
     ):
         self.interviewer = interviewer
         self.evaluator = evaluator
@@ -31,9 +35,63 @@ class InterviewGraph:
         self.question_planner = question_planner
         self.dialogue_analyzer = dialogue_analyzer
         self.report_generator = report_generator
+        self.emotion_agent = emotion_agent
 
     def plan_turn(self, state: InterviewSessionState, user_message: str) -> dict:
         return self.interviewer.plan_turn(state, user_message)
+
+    def build_emotion_input(
+        self,
+        state: InterviewSessionState,
+        user_message: str,
+    ) -> EmotionAssessmentInput:
+        source_turns = state.turns[-4:]
+        if source_turns and source_turns[-1].role == "interviewer":
+            source_turns = source_turns[:-1]
+        recent_turns = [
+            DialogueTurn(role=turn.role, text=turn.text)
+            for turn in source_turns
+        ]
+        if not recent_turns or recent_turns[-1].role != "candidate" or recent_turns[-1].text != user_message:
+            recent_turns.append(DialogueTurn(role="candidate", text=user_message))
+        return EmotionAssessmentInput(
+            current_question=state.current_question,
+            candidate_answer=user_message,
+            recent_history=recent_turns,
+            candidate_profile_summary=state.resume_summary or state.resume_text or None,
+            previous_states=list(state.emotion_state_history[-3:]),
+        )
+
+    def fast_assess_emotion(
+        self,
+        state: InterviewSessionState,
+        user_message: str,
+    ) -> EmotionAssessment | None:
+        if self.emotion_agent is None:
+            return None
+        return self.emotion_agent.assess_rules_only(self.build_emotion_input(state, user_message))
+
+    def apply_emotion_assessment(
+        self,
+        state: InterviewSessionState,
+        assessment: EmotionAssessment | None,
+        source: str = "effective",
+    ) -> InterviewSessionState:
+        if assessment is None:
+            return state
+        serialized = assessment.model_dump(mode="json")
+        if source == "fast":
+            state.latest_fast_emotion_assessment = serialized
+        elif source == "refined":
+            state.latest_refined_emotion_assessment = serialized
+
+        effective = state.latest_refined_emotion_assessment or serialized
+        state.latest_emotion_assessment = effective
+        state.latest_interview_policy = build_interview_policy_from_assessment(
+            EmotionAssessment.model_validate(effective)
+        ).model_dump()
+        state.emotion_state_history = [*state.emotion_state_history[-4:], assessment.state.value]
+        return state
 
     def finalize_turn(
         self,
@@ -53,22 +111,30 @@ class InterviewGraph:
         next_state.turns.append(InterviewTurn(role="interviewer", text=reply))
         next_state.stage = "active"
 
-        # Advance question if followup limit reached
-        if next_state.question_plan and next_state.current_followup_count >= self.interviewer.config.max_followups_per_question:
-            next_state.current_question_index += 1
-            next_state.current_followup_count = 0
-            if next_state.current_question_index < len(next_state.question_plan):
-                next_state.current_question = next_state.question_plan[next_state.current_question_index]
-            else:
-                next_state.current_question = ""
+        # Advance question once this answer has consumed the current follow-up budget.
+        if next_state.question_plan:
+            next_state.current_followup_count += 1
+            if next_state.current_followup_count >= self.interviewer.config.max_followups_per_question:
+                next_state.current_question_index += 1
+                next_state.current_followup_count = 0
+                if next_state.current_question_index < len(next_state.question_plan):
+                    next_state.current_question = next_state.question_plan[next_state.current_question_index]
+                else:
+                    next_state.current_question = ""
         else:
             next_state.current_followup_count += 1
 
-        if should_end:
+        if should_end or self._is_plan_exhausted(next_state):
             next_state.stage = "completed"
             # Post-interview pipeline runs in background thread (see handler)
 
         return next_state
+
+    def _is_plan_exhausted(self, state: InterviewSessionState) -> bool:
+        if state.question_plan:
+            return state.current_question_index >= len(state.question_plan) or not state.current_question
+        interviewer_turns = sum(1 for turn in state.turns if turn.role == "interviewer")
+        return interviewer_turns >= self.interviewer.config.max_questions
 
     def run_post_interview_pipeline(self, state: InterviewSessionState) -> None:
         """Run dialogue analysis and report generation. Called from background thread."""

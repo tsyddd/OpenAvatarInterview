@@ -15,6 +15,7 @@ class InterviewAgentConfig(HandlerBaseConfigModel, BaseModel):
     resume_analyzer_model: str = Field(default="qwen-plus")
     question_planner_model: str = Field(default="qwen-plus")
     dialogue_analyzer_model: str = Field(default="qwen-plus")
+    emotion_model_name: str = Field(default="qwen-plus")
     api_key: Optional[str] = Field(default=os.getenv("DASHSCOPE_API_KEY"))
     api_url: Optional[str] = Field(default="https://dashscope.aliyuncs.com/compatible-mode/v1")
     frontend_redirect_target: str = Field(default="/")

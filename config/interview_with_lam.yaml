@@ -19,7 +19,7 @@ default:
     handler_configs:
       LamClient:
         module: client/ws_lam_client/ws_lam_client_handler
-        asset_path: "lam_samples/barbara.zip"
+        asset_path: "/media/liang/12T/han/OpenAvatarInterview/lam_samples/chatting_avatar_20260519004403.zip"
         connection_ttl: 900
       InterruptHandler:
         module: logic/interrupt/interrupt_handler
@@ -27,8 +27,8 @@ default:
         module: vad/silerovad/duplex_vad_handler
         speaking_threshold: 0.25
         start_delay: 1024
-        end_delay: 32000
-        early_end_delay: 5000
+        end_delay: 80000
+        early_end_delay: 80000
         early_end_repeat_delay: 1000
         buffer_look_back: 2048
         speech_padding: 512
@@ -72,8 +72,8 @@ default:
       CosyVoice:
         enabled: true
         module: tts/bailian_tts/tts_handler_cosyvoice_bailian
-        voice: "longxiaocheng"
-        model_name: "cosyvoice-v1"
+        voice: "longanlang"
+        model_name: "cosyvoice-v2"
       InterviewAgent:
         enabled: true
         module: interview/interview_agent_handler

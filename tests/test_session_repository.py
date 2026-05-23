@@ -37,3 +37,30 @@ def test_repository_appends_transcript_entries(tmp_path):
 
     assert len(lines) == 2
     assert json.loads(lines[0])["text"] == "你好"
+
+
+def test_repository_saves_report_pdf(tmp_path):
+    repo = InterviewSessionRepository(base_dir=tmp_path)
+
+    saved_path = repo.save_report_pdf("abc", b"%PDF-test")
+
+    assert saved_path.name == "report.pdf"
+    assert saved_path.read_bytes() == b"%PDF-test"
+
+
+def test_repository_saves_pdf_report(tmp_path):
+    repo = InterviewSessionRepository(base_dir=tmp_path)
+
+    pdf_path = repo.save_report_pdf("abc", b"%PDF-1.4\nmock\n")
+
+    assert pdf_path.name == "report.pdf"
+    assert pdf_path.read_bytes().startswith(b"%PDF-1.4")
+
+
+def test_repository_saves_report_html(tmp_path):
+    repo = InterviewSessionRepository(base_dir=tmp_path)
+
+    html_path = repo.save_report_html("abc", "<html><body>ok</body></html>")
+
+    assert html_path.name == "report.html"
+    assert "ok" in html_path.read_text(encoding="utf-8")

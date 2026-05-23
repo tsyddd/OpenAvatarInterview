@@ -147,6 +147,60 @@
   z-index: 100;
 }
 
+.session-id-pill {
+  position: fixed;
+  top: 18px;
+  right: 24px;
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(70vw, 560px);
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.86);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+}
+
+.session-id-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.session-id-value {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.report-status-pill {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.86);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+
+  &.failed {
+    background: rgba(185, 28, 28, 0.92);
+  }
+}
+
 .report-btn {
   display: flex;
   align-items: center;
@@ -192,5 +246,11 @@
     max-width: min(100%, 520px);
     height: 240px;
     max-height: 240px;
+  }
+
+  .session-id-pill {
+    top: 14px;
+    right: 14px;
+    max-width: calc(100vw - 28px);
   }
 }

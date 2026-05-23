@@ -20,4 +20,7 @@
 最近对话：
 {{recent_turns}}
 
+交互状态辅助信息：
+{{emotion_context}}
+
 请直接生成下一句面试官回复文本，不要输出 JSON。

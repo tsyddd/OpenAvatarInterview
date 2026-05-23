@@ -81,6 +81,10 @@
     >
       <ChatRecords ref="chatRecordsInstanceRef" :chat-records="chatRecords" />
     </div>
+    <div v-if="appState.currentSessionId" class="session-id-pill">
+      <span class="session-id-label">Session</span>
+      <span class="session-id-value">{{ appState.currentSessionId }}</span>
+    </div>
     <div v-if="reportChecked" class="report-btn-wrapper">
       <button class="report-btn" @click="showReport = true">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -91,6 +95,10 @@
         </svg>
         查看面试报告
       </button>
+    </div>
+    <div v-else-if="reportPending" class="report-status-pill">正在生成报告...</div>
+    <div v-else-if="reportFailed" class="report-status-pill failed">
+      报告生成失败{{ reportError ? `：${reportError}` : '' }}
     </div>
     <ReportModal
       v-if="appState.currentSessionId"
@@ -110,7 +118,7 @@ import ChatBtn from '@/components/ChatBtn.vue'
 import ChatInput from '@/components/ChatInput.vue'
 import ChatRecords from '@/components/ChatRecords.vue'
 import ReportModal from '@/components/ReportModal.vue'
-import { getInterviewAnalysis } from '@/apis'
+import { getInterviewSession } from '@/apis'
 import { useAppStore } from '@/store/app'
 import { useChatStore } from '@/store/chat'
 import { useWSVideoChatStore } from '@/store/ws'
@@ -133,9 +141,11 @@ const audioSourceCallback = (): MediaStream | null => mediaState.localStream
 // Report state
 const showReport = ref(false)
 const reportChecked = ref(false)
+const reportPending = ref(false)
+const reportFailed = ref(false)
+const reportError = ref('')
 const reportPollTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 const sessionBootstrapPending = ref(false)
-let reportCheckCount = 0
 const { streamState } = storeToRefs(wsChatState)
 const { replying, showChatRecords } = storeToRefs(chatState)
 const { chatRecords, inputVisible, toolsVisible } = storeToRefs(appState)
@@ -166,27 +176,46 @@ async function ensureSessionStarted(force = false) {
 
 async function checkReportReady() {
   const sid = appState.currentSessionId
-  if (!sid || reportChecked.value) return
+  if (!sid) return
   try {
-    const resp = await getInterviewAnalysis(sid)
+    const resp = await getInterviewSession(sid)
     if (resp.ok) {
       const data = await resp.json()
-      if (data.final_evaluation) {
+      reportPending.value = ['pending', 'running'].includes(data.report_status)
+      reportFailed.value = data.report_status === 'failed'
+      reportError.value = data.report_error || ''
+      if (data.report_status === 'ready' || data.report_ready) {
         reportChecked.value = true
+        reportPending.value = false
+        if (reportPollTimer.value) clearTimeout(reportPollTimer.value)
+        return
+      }
+      if (data.report_status === 'failed') {
         if (reportPollTimer.value) clearTimeout(reportPollTimer.value)
         return
       }
     }
   } catch {}
-  reportCheckCount++
-  if (reportCheckCount < 30) {
-    reportPollTimer.value = setTimeout(checkReportReady, 2000)
-  }
+  if (reportPollTimer.value) clearTimeout(reportPollTimer.value)
+  reportPollTimer.value = setTimeout(checkReportReady, 2000)
 }
+
+watch(
+  () => appState.currentSessionId,
+  (sessionId) => {
+    reportChecked.value = false
+    reportPending.value = false
+    reportFailed.value = false
+    reportError.value = ''
+    if (reportPollTimer.value) clearTimeout(reportPollTimer.value)
+    if (sessionId) {
+      void checkReportReady()
+    }
+  },
+)
 
 watch(replying, (v) => {
   if (!v && appState.currentSessionId && !reportChecked.value) {
-    reportCheckCount = 0
     checkReportReady()
   }
 })
@@ -284,5 +313,46 @@ function onSend(message: string): void {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.session-id-pill {
+  position: fixed;
+  top: 18px;
+  right: 24px;
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(70vw, 560px);
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.86);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+}
+
+.session-id-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.session-id-value {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 900px) {
+  .session-id-pill {
+    top: 14px;
+    right: 14px;
+    max-width: calc(100vw - 28px);
+  }
 }
 </style>

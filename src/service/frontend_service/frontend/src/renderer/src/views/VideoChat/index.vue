@@ -78,6 +78,10 @@
     >
       <ChatRecords ref="chatRecordsInstanceRef" :chat-records="chatRecords" />
     </div>
+    <div v-if="appState.currentSessionId" class="session-id-pill">
+      <span class="session-id-label">Session</span>
+      <span class="session-id-value">{{ appState.currentSessionId }}</span>
+    </div>
     <div v-if="reportChecked" class="report-btn-wrapper">
       <button class="report-btn" @click="showReport = true">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -88,6 +92,10 @@
         </svg>
         查看面试报告
       </button>
+    </div>
+    <div v-else-if="reportPending" class="report-status-pill">正在生成报告...</div>
+    <div v-else-if="reportFailed" class="report-status-pill failed">
+      报告生成失败{{ reportError ? `：${reportError}` : '' }}
     </div>
     <ReportModal
       v-if="appState.currentSessionId"
@@ -107,7 +115,7 @@ import ChatBtn from '@/components/ChatBtn.vue'
 import ChatInput from '@/components/ChatInput.vue'
 import ChatRecords from '@/components/ChatRecords.vue'
 import ReportModal from '@/components/ReportModal.vue'
-import { getInterviewAnalysis } from '@/apis'
+import { getInterviewSession } from '@/apis'
 import { useAppStore } from '@/store/app'
 import { useChatStore } from '@/store/chat'
 import { useVideoChatStore } from '@/store/webrtc'
@@ -137,8 +145,10 @@ const audioSourceCallback = (): MediaStream | null => mediaState.localStream
 // Report state
 const showReport = ref(false)
 const reportChecked = ref(false)
+const reportPending = ref(false)
+const reportFailed = ref(false)
+const reportError = ref('')
 const reportPollTimer = ref<ReturnType<typeof setTimeout> | null>(null)
-let reportCheckCount = 0
 const { streamState } = storeToRefs(videoChatState)
 const { volumeMuted, replying, showChatRecords } = storeToRefs(chatState)
 const { avatarType, chatRecords, inputVisible, toolsVisible } = storeToRefs(appState)
@@ -147,27 +157,46 @@ const { wrapperRect, isLandscape } = storeToRefs(visionState)
 
 async function checkReportReady() {
   const sid = appState.currentSessionId
-  if (!sid || reportChecked.value) return
+  if (!sid) return
   try {
-    const resp = await getInterviewAnalysis(sid)
+    const resp = await getInterviewSession(sid)
     if (resp.ok) {
       const data = await resp.json()
-      if (data.final_evaluation) {
+      reportPending.value = ['pending', 'running'].includes(data.report_status)
+      reportFailed.value = data.report_status === 'failed'
+      reportError.value = data.report_error || ''
+      if (data.report_status === 'ready' || data.report_ready) {
         reportChecked.value = true
+        reportPending.value = false
+        if (reportPollTimer.value) clearTimeout(reportPollTimer.value)
+        return
+      }
+      if (data.report_status === 'failed') {
         if (reportPollTimer.value) clearTimeout(reportPollTimer.value)
         return
       }
     }
   } catch {}
-  reportCheckCount++
-  if (reportCheckCount < 30) {
-    reportPollTimer.value = setTimeout(checkReportReady, 2000)
-  }
+  if (reportPollTimer.value) clearTimeout(reportPollTimer.value)
+  reportPollTimer.value = setTimeout(checkReportReady, 2000)
 }
+
+watch(
+  () => appState.currentSessionId,
+  (sessionId) => {
+    reportChecked.value = false
+    reportPending.value = false
+    reportFailed.value = false
+    reportError.value = ''
+    if (reportPollTimer.value) clearTimeout(reportPollTimer.value)
+    if (sessionId) {
+      void checkReportReady()
+    }
+  },
+)
 
 watch(replying, (v) => {
   if (!v && appState.currentSessionId && !reportChecked.value) {
-    reportCheckCount = 0
     checkReportReady()
   }
 })

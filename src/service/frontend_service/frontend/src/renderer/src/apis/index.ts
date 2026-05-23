@@ -56,6 +56,14 @@ export function getInterviewReport(sessionId: string): Promise<Response> {
   return fetch(`/openavatarinterview/sessions/${sessionId}/report`)
 }
 
+export function getInterviewReportHtml(sessionId: string): Promise<Response> {
+  return fetch(`/openavatarinterview/sessions/${sessionId}/report/html`)
+}
+
 export function getInterviewAnalysis(sessionId: string): Promise<Response> {
   return fetch(`/openavatarinterview/sessions/${sessionId}/analysis`)
+}
+
+export function getInterviewReportPdf(sessionId: string): Promise<Response> {
+  return fetch(`/openavatarinterview/sessions/${sessionId}/report/pdf`)
 }

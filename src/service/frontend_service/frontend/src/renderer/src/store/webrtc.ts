@@ -41,6 +41,10 @@ export const useVideoChatStore = defineStore('videoChatStore', {
       const appStore = useAppStore()
       const chatStore = useChatStore()
       if (this.streamState === 'closed') {
+        const sessionId =
+          appStore.currentSessionId ||
+          (crypto.randomUUID ? crypto.randomUUID() : nanoid())
+        appStore.startInterview(sessionId)
         appStore.resetChatRecords()
         this.peerConnection = new RTCPeerConnection(appStore.rtcConfig)
         this.peerConnection.addEventListener('connectionstatechange', async () => {
@@ -57,7 +61,12 @@ export const useVideoChatStore = defineStore('videoChatStore', {
           }
         })
         this.streamState = StreamState.waiting
-        await setupWebRTC(mediaStore.stream!, this.peerConnection!, visionState.remoteVideoRef!)
+        await setupWebRTC(
+          mediaStore.stream!,
+          this.peerConnection!,
+          visionState.remoteVideoRef!,
+          sessionId,
+        )
           .then(([dataChannel, webRTCId]) => {
             this.streamState = StreamState.open
             this.webRTCId = webRTCId as string
@@ -66,7 +75,7 @@ export const useVideoChatStore = defineStore('videoChatStore', {
 
             if (appStore.avatarType === 'lam') {
               if (appStore.wsSessionRoute) {
-                const ws = this.initWebsocket(appStore.wsSessionRoute, this.webRTCId)
+                const ws = this.initWebsocket(appStore.wsSessionRoute, sessionId)
                 this.localAvatarRenderer = this.initAvatarHandler(ws, appStore.avatarAssetsPath)
                 chatStore.showChatRecords = true
               }

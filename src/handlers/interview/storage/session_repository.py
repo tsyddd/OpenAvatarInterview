@@ -58,7 +58,17 @@ class InterviewSessionRepository:
         path.write_text(content, encoding="utf-8")
         return path
 
+    def save_report_html(self, session_id: str, content: str, filename: str = "report.html") -> Path:
+        path = self.session_dir(session_id) / filename
+        path.write_text(content, encoding="utf-8")
+        return path
+
     def save_report_json(self, session_id: str, payload: dict[str, Any]) -> Path:
         path = self.session_dir(session_id) / "report.json"
         path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        return path
+
+    def save_report_pdf(self, session_id: str, content: bytes, filename: str = "report.pdf") -> Path:
+        path = self.session_dir(session_id) / filename
+        path.write_bytes(content)
         return path

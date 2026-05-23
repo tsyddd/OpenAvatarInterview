@@ -214,7 +214,8 @@ export function stop(pc: RTCPeerConnection) {
 export async function setupWebRTC(
   stream: MediaStream,
   peerConnection: RTCPeerConnection,
-  remoteNode: HTMLVideoElement
+  remoteNode: HTMLVideoElement,
+  preferredWebrtcId?: string
 ) {
   //  Send audio-video stream to server
   stream.getTracks().forEach(async (track) => {
@@ -234,7 +235,9 @@ export async function setupWebRTC(
   const offer = await peerConnection.createOffer()
   await peerConnection.setLocalDescription(offer)
 
-  const webrtc_id = Math.random().toString(36).substring(7)
+  const webrtc_id =
+    preferredWebrtcId ||
+    (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(7))
 
   // Send ICE candidates to server
   // (especially needed when server is behind firewall)

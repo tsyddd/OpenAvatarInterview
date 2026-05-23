@@ -3,6 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TypedDict
 
+from ..emotion.emotion_types import EmotionAssessment
+from ..emotion.interview_policy import InterviewPolicy, build_interview_policy_from_assessment
+from ..emotion.interviewer_integration import build_interviewer_context_with_emotion
 from ..interview_config import InterviewAgentConfig
 from ..models.interview_models import InterviewSessionState
 from ..prompts.loader import PromptLoader
@@ -73,11 +76,13 @@ class InterviewerAgent:
             f"{turn.role}: {turn.text}"
             for turn in state.turns[-8:]
         ) or "暂无"
+        emotion_context = self._build_emotion_context(state)
 
         render_vars = {
             "resume_summary": state.resume_summary or state.resume_text or "暂无简历信息",
             "current_question": state.current_question,
             "recent_turns": recent_turns,
+            "emotion_context": emotion_context,
         }
         if question_plan_text:
             render_vars["question_plan"] = question_plan_text
@@ -88,6 +93,26 @@ class InterviewerAgent:
             payload["prompt"] = self.prompts.render("interviewer.md", render_vars)
 
         return payload
+
+    def _build_emotion_context(self, state: InterviewSessionState) -> str:
+        raw_assessment = (
+            state.latest_refined_emotion_assessment
+            or state.latest_fast_emotion_assessment
+            or state.latest_emotion_assessment
+            or {}
+        )
+        raw_policy = state.latest_interview_policy or {}
+        if not raw_assessment:
+            return "暂无"
+        try:
+            assessment = EmotionAssessment.model_validate(raw_assessment)
+        except Exception:
+            return "暂无"
+        try:
+            policy = InterviewPolicy.model_validate(raw_policy) if raw_policy else build_interview_policy_from_assessment(assessment)
+        except Exception:
+            policy = build_interview_policy_from_assessment(assessment)
+        return build_interviewer_context_with_emotion(assessment, policy)
 
     def _decide_end(self, payload: InterviewerPayload) -> InterviewerPayload:
         state = payload["state"]

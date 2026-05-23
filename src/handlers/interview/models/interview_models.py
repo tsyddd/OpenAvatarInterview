@@ -23,6 +23,10 @@ class InterviewTurn:
 class InterviewSessionState:
     session_id: str
     stage: str = "created"
+    report_status: str = "idle"
+    report_error: str | None = None
+    report_pdf_filename: str | None = None
+    report_html_filename: str | None = None
     resume_filename: str | None = None
     resume_text: str = ""
     resume_summary: str = ""
@@ -35,6 +39,11 @@ class InterviewSessionState:
     covered_topics: list[str] = field(default_factory=list)
     conversation_summary: str = ""
     turns: list[InterviewTurn] = field(default_factory=list)
+    latest_fast_emotion_assessment: dict[str, Any] | None = None
+    latest_refined_emotion_assessment: dict[str, Any] | None = None
+    latest_emotion_assessment: dict[str, Any] | None = None
+    latest_interview_policy: dict[str, Any] | None = None
+    emotion_state_history: list[str] = field(default_factory=list)
     dialogue_analysis: dict[str, Any] | None = None
     final_evaluation: dict[str, Any] | None = None
     final_report: dict[str, Any] | None = None
@@ -47,6 +56,10 @@ class InterviewSessionState:
         return cls(
             session_id=str(data.get("session_id", "")),
             stage=str(data.get("stage", "created")),
+            report_status=str(data.get("report_status", "idle")),
+            report_error=data.get("report_error"),
+            report_pdf_filename=data.get("report_pdf_filename"),
+            report_html_filename=data.get("report_html_filename"),
             resume_filename=data.get("resume_filename"),
             resume_text=str(data.get("resume_text", "")),
             resume_summary=str(data.get("resume_summary", "")),
@@ -59,6 +72,11 @@ class InterviewSessionState:
             covered_topics=list(data.get("covered_topics", [])),
             conversation_summary=str(data.get("conversation_summary", "")),
             turns=[InterviewTurn.from_dict(item) for item in data.get("turns", [])],
+            latest_fast_emotion_assessment=data.get("latest_fast_emotion_assessment"),
+            latest_refined_emotion_assessment=data.get("latest_refined_emotion_assessment"),
+            latest_emotion_assessment=data.get("latest_emotion_assessment"),
+            latest_interview_policy=data.get("latest_interview_policy"),
+            emotion_state_history=[str(item) for item in data.get("emotion_state_history", [])],
             dialogue_analysis=data.get("dialogue_analysis"),
             final_evaluation=data.get("final_evaluation"),
             final_report=data.get("final_report"),
